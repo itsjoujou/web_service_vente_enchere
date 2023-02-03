@@ -10,7 +10,7 @@ import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Integer> {
     @Transactional
-    @Query(value = "SELECT * FROM users WHERE username=?1 AND password=MD5(?2) AND id_type_user=?3", nativeQuery = true)
+    @Query(value = "SELECT * FROM users WHERE username=?1 AND password=MD5(?2) AND id_type_user=?3 LIMIT 1", nativeQuery = true)
     Optional<User> authenticateUserWithUsernameAndHashedPassword(String username, String password, int typeUser);
 
     @Transactional

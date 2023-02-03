@@ -21,7 +21,7 @@ public class User {
     @Column(name = "password", nullable = false, length = 36)
     private String password;
 
-    @Column(name = "solde", nullable = false)
+    @Column(name = "solde")
     private double solde;
 
     @Column(name = "token", length = 36)

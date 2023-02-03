@@ -2,6 +2,7 @@ package app.web;
 
 import app.model.User;
 import app.service.UserService;
+import app.util.CustomError;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -19,7 +20,13 @@ public class UserController {
     }
 
     @PostMapping("/new_account")
-    public void signUp(@RequestBody User newUser) {
-        userService.signUp(newUser);
+    public Object signUp(@RequestBody User newUser) {
+        try {
+            System.out.println(newUser.getUsername());
+            return userService.signUp(newUser);
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            return new CustomError(e.getMessage());
+        }
     }
 }

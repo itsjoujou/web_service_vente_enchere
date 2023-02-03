@@ -1,6 +1,6 @@
 package app.web;
 
-import app.model.Enchere;
+import app.model.EnchereImage;
 import app.model.EnchereRechercheCriteria;
 import app.service.EnchereService;
 import app.util.Data;
@@ -49,13 +49,14 @@ public class EnchereController {
         return enchereService.getEnchere(id_enchere);
     }
 
-    @GetMapping("/user/{id_user}")
+    @GetMapping("/history/{id_user}")
     public Object getEnchereByIdUser(@PathVariable int id_user) {
         return enchereService.getEncheresByIdUser(id_user);
     }
 
     @PostMapping
-    public void save(@RequestBody Enchere newEnchere) {
+    public void save(@RequestBody EnchereImage newEnchere) throws Exception {
+        System.out.println(newEnchere.getImages().getBase64().length);
         enchereService.save(newEnchere);
     }
 }

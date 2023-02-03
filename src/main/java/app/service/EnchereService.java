@@ -1,15 +1,10 @@
 package app.service;
 
-import app.model.Commission;
-import app.model.Enchere;
-import app.model.EnchereRechercheCriteria;
-import app.repository.CommissionRepository;
-import app.repository.EnchereRepository;
-import app.util.CustomError;
+import app.model.*;
+import app.repository.*;
 import app.util.Data;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.TypedQuery;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Predicate;
@@ -19,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -27,37 +23,73 @@ public class EnchereService {
     private final EnchereRepository enchereRepository;
 
     @Autowired
+    private final EtatEnchereRepository etatEnchereRepository;
+
+    @Autowired
     private final CommissionRepository commissionRepository;
+
+    @Autowired
+    private final DureeEnchereRepository dureeEnchereRepository;
+
+    @Autowired
+    private final ImageRepository imageRepository;
 
     @PersistenceContext
     private EntityManager entityManager;
 
-    public EnchereService(EnchereRepository enchereRepository, CommissionRepository commissionRepository) {
+    public EnchereService(EnchereRepository enchereRepository,
+                          EtatEnchereRepository etatEnchereRepository,
+                          CommissionRepository commissionRepository,
+                          DureeEnchereRepository dureeEnchereRepository,
+                          ImageRepository imageRepository) {
         this.enchereRepository = enchereRepository;
+        this.etatEnchereRepository = etatEnchereRepository;
         this.commissionRepository = commissionRepository;
+        this.dureeEnchereRepository = dureeEnchereRepository;
+        this.imageRepository = imageRepository;
     }
 
     public Object getEncheresInProgress() {
-        return new Data(enchereRepository.findEnchereByDateFinAfter(Timestamp.valueOf(LocalDateTime.now())));
+        List<EtatEnchere> enchereList = etatEnchereRepository.findEtatEncheresByDateFinAfter(Timestamp.valueOf(LocalDateTime.now()));
+        this.setImageToEtatEnchereList(enchereList);
+
+        return new Data(enchereList);
     }
 
     public Object getEnchere(int id_enchere) {
-        Optional<Enchere> optionalEnchere = enchereRepository.findById(id_enchere);
+        Optional<EtatEnchere> optionalEnchere = etatEnchereRepository.findById(id_enchere);
+        this.setImageToEtatEnchere(optionalEnchere.get());
 
-        return optionalEnchere.isPresent() ? new Data(optionalEnchere.get()) : new CustomError("ID not found!");
+        return new Data(optionalEnchere.get());
     }
 
     public Object getEncheresByIdUser(int id_user) {
-        return enchereRepository.findEnchereByIdUser(id_user);
+        List<EtatEnchere> enchereList =  etatEnchereRepository.findByIdUser(id_user);
+        this.setImageToEtatEnchereList(enchereList);
+
+        return new Data(enchereList);
     }
 
-    public void save(Enchere newEnchere) {
-        Optional<Commission> optionalCommission = commissionRepository.findCurrentCommission();
-        newEnchere.setDateDebut(Timestamp.valueOf(LocalDateTime.now()));
-        newEnchere.setDateFin(Timestamp.valueOf(LocalDateTime.now().plusHours(newEnchere.getDuree())));
-        newEnchere.setCommission(optionalCommission.get().getPourcentage());
+    public void save(EnchereImage enchereImage) throws Exception {
+        Commission commission = commissionRepository.findCurrentCommission().get();
+        DureeEnchere dureeEnchere = dureeEnchereRepository.findFirstByDateDebutBeforeOrderByDateDebutDesc(Timestamp.valueOf(LocalDateTime.now())).get();
+        Enchere newEnchere = enchereImage.getEnchere();
+        Image image = enchereImage.getImages();
 
-        enchereRepository.save(newEnchere);
+        newEnchere.setDateDebut(Timestamp.valueOf(LocalDateTime.now()));
+        if (newEnchere.getDuree() <= dureeEnchere.getDureeMin()) {
+            throw new Exception("La durée minimum autorisée est de "+ dureeEnchere.getDureeMin() +"h");
+        }
+        else if (newEnchere.getDuree() >= dureeEnchere.getDureeMax()) {
+            throw new Exception("La durée maximum autorisée est de "+ dureeEnchere.getDureeMax() +"h");
+        }
+        newEnchere.setDateFin(Timestamp.valueOf(LocalDateTime.now().plusHours(newEnchere.getDuree())));
+        newEnchere.setCommission(commission.getPourcentage());
+
+        newEnchere = enchereRepository.save(newEnchere);
+        image.setIdEnchere(newEnchere.getId());
+        image.setBase64(enchereImage.getImages().getBase64());
+        imageRepository.save(image);
     }
 
     public Object findEnchereWithRechercheAvancee(EnchereRechercheCriteria filter) {
@@ -88,6 +120,29 @@ public class EnchereService {
         }
 
         query.select(enchereRoot).where(criteria);
-        return new Data(entityManager.createQuery(query).getResultList());
+        List<Enchere> enchereList = entityManager.createQuery(query).getResultList();
+        this.setImageToEnchereList(enchereList);
+
+        return new Data(enchereList);
+    }
+
+    public void setImageToEnchereList(List<Enchere> enchereList) {
+        for (Enchere enchere : enchereList) {
+            this.setImageToEnchere(enchere);
+        }
+    }
+
+    public void setImageToEnchere(Enchere newEnchere) {
+        newEnchere.setImage(imageRepository.findImageByIdEnchere(newEnchere.getId()));
+    }
+
+    public void setImageToEtatEnchereList(List<EtatEnchere> etatEnchereList) {
+        for (EtatEnchere enchere : etatEnchereList) {
+            this.setImageToEtatEnchere(enchere);
+        }
+    }
+
+    public void setImageToEtatEnchere(EtatEnchere newEnchere) {
+        newEnchere.setImage(imageRepository.findImageByIdEnchere(newEnchere.getIdEnchere()));
     }
 }
