@@ -17,6 +17,9 @@ public class EtatEnchere {
 
     @Column(name = "date_fin")
     private Timestamp dateFin;
+    
+    @Column(name = "statut")
+    private String statut;
 
     @ManyToOne(targetEntity = Categorie.class)
     @OnDelete(action = OnDeleteAction.CASCADE)
@@ -37,9 +40,6 @@ public class EtatEnchere {
 
     @Transient
     private Image image;
-
-    @Transient
-    private String statut;
 
     public int getId() {
         return idEnchere;
