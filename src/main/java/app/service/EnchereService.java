@@ -143,6 +143,6 @@ public class EnchereService {
     }
 
     public void setImageToEtatEnchere(EtatEnchere newEnchere) {
-        newEnchere.setImage(imageRepository.findImageByIdEnchere(newEnchere.getIdEnchere()));
+        newEnchere.setImage(imageRepository.findImageByIdEnchere(newEnchere.getId()));
     }
 }

@@ -41,7 +41,7 @@ public class EtatEnchere {
     @Transient
     private String statut;
 
-    public int getIdEnchere() {
+    public int getId() {
         return idEnchere;
     }
 
