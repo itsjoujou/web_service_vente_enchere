@@ -2,6 +2,7 @@ package app.web;
 
 import app.model.User;
 import app.service.UserService;
+import app.util.CustomError;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,6 +18,10 @@ public class AuthenticateController {
 
     @PostMapping("/users")
     public Object AuthenticateAsUser(@RequestBody User authenticateUser) {
-        return service.authenticate(authenticateUser);
+        try {
+            return service.authenticate(authenticateUser);
+        } catch (Exception e) {
+            return new CustomError(e.getMessage());
+        }
     }
 }

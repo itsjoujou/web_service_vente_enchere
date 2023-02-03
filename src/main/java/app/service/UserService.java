@@ -22,14 +22,19 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
-    public Object authenticate(User user) {
+    public Object authenticate(User user) throws Exception {
         userRepository.generateToken(user.getUsername(), user.getPassword());
         Optional<User> optionalUser = userRepository.authenticateUserWithUsernameAndHashedPassword(user.getUsername(), user.getPassword(), 2);
+        if (optionalUser.isEmpty()) {
+            throw new Exception("User not found!");
+        }
 
-        return optionalUser.isPresent() ? new Data(optionalUser.get()) : new CustomError("No user found!");
+        return new Data(optionalUser.get());
     }
 
-    public void signUp(User newUser) {
+    public Object signUp(User newUser) throws Exception {
         userRepository.insertNewUser(newUser.getUsername(), newUser.getPassword());
+
+        return authenticate(newUser);
     }
 }

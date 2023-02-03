@@ -40,6 +40,9 @@ public class Enchere {
     @Transient
     private long duree;
 
+    @Transient
+    private Image image;
+
     public int getId() {
         return id;
     }
@@ -111,4 +114,14 @@ public class Enchere {
     public void setDuree(long duree) {
         this.duree = duree;
     }
+
+    public Image getImage() {
+        return image;
+    }
+
+    public void setImage(Image image) {
+        this.image = image;
+    }
+
+
 }
